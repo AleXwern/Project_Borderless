@@ -66,5 +66,8 @@ void CopyTrainerCardData(struct TrainerCard *dst, u16 *src, u8 gameVersion);
 void ShowPlayerTrainerCard(void (*callback)(void));
 void ShowTrainerCardInLink(u8 arg0, void (*callback)(void));
 void TrainerCard_GenerateCardForPlayer(struct TrainerCard *);
+u8	getBadgeCount(void);
+u8	getBaseWildLevel(void);
+u8	getBaseTrainerLevel(void);
 
 #endif // GUARD_TRAINER_CARD_H

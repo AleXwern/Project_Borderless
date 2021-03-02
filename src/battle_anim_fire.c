@@ -1115,7 +1115,7 @@ static void AnimWillOWispOrb(struct Sprite *sprite)
             sprite->data[3] = sprite->pos1.y;
             sprite->data[4] = GetBattlerSpriteCoord(gBattleAnimTarget, 3);
 
-            sub_80A6FD4(sprite);
+            InitAnimLinearTranslationWithSpeed(sprite);
             sprite->callback = AnimWillOWispOrb_Step;
         }
         break;
@@ -1136,7 +1136,7 @@ static void AnimWillOWispOrb_Step(struct Sprite *sprite)
 
         if ((initialData5 == 0 || initialData5 > 196) && newData5 > 0 && sprite->data[7] == 0)
         {
-            PlaySE12WithPanning(SE_W172, gAnimCustomPanning);
+            PlaySE12WithPanning(SE_M_FLAME_WHEEL, gAnimCustomPanning);
         }
     }
     else

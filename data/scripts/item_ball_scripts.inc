@@ -1,5 +1,5 @@
 Route102_EventScript_ItemPotion:: @ 8290CD8
-	finditem ITEM_POTION
+	finditem ITEM_HM03
 	end
 
 Route103_EventScript_ItemGuardSpec:: @ 8290CE5
@@ -398,7 +398,7 @@ MeteorFalls_B1F_2R_EventScript_ItemTM02:: @ 82911DF
 	finditem ITEM_TM02
 	end
 
-NewMauville_Inside_EventScript_ItemUltraRope:: @ 82911EC
+NewMauville_Inside_EventScript_ItemUltraBall:: @ 82911EC
 	finditem ITEM_ULTRA_BALL
 	end
 

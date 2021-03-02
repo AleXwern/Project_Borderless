@@ -443,7 +443,7 @@ static void InitItemStorageMenu(u8 taskId, u8 var)
     windowTemplate.width = GetMaxWidthInMenuTable(gPCText_ItemPCOptionsText, 4);
     data[4] = AddWindow(&windowTemplate);
     SetStandardWindowBorderStyle(data[4], 0);
-    PrintMenuTable(data[4], 4, gPCText_ItemPCOptionsText);
+    PrintMenuTable(data[4], ARRAY_COUNT(gPCText_ItemPCOptionsText), gPCText_ItemPCOptionsText);
     InitMenuInUpperLeftCornerPlaySoundWhenAPressed(data[4], 4, var);
     ScheduleBgCopyTilemapToVram(0);
     ItemStorageMenuPrint(gPCText_OptionDescList[var]);
@@ -686,7 +686,7 @@ static void Mailbox_ReturnToPlayerPC(u8 taskId)
 static void Mailbox_PrintMailOptions(u8 taskId)
 {
     u8 r4 = sub_81D1C84(2);
-    PrintMenuTable(r4, 4, gMailboxMailOptions);
+    PrintMenuTable(r4, ARRAY_COUNT(gMailboxMailOptions), gMailboxMailOptions);
     InitMenuInUpperLeftCornerPlaySoundWhenAPressed(r4, 4, 0);
     ScheduleBgCopyTilemapToVram(0);
     gTasks[taskId].func = Mailbox_MailOptionsProcessInput;
@@ -1058,7 +1058,6 @@ static void ItemStorage_ProcessWithdrawTossInput(u8 taskId)
     s16 *data;
     bool32 toss;
     u32 i, x;
-    u8 windowId;
     const u8* text;
 
     data = gTasks[taskId].data;
@@ -1134,7 +1133,7 @@ static void ItemStorage_ProcessInput(u8 taskId)
     s32 id;
 
     data = gTasks[taskId].data;
-    if (gMain.newKeys & SELECT_BUTTON)
+    if (JOY_NEW(SELECT_BUTTON))
     {
         ListMenuGetScrollAndRow(data[5], &(playerPCItemPageInfo.itemsAbove), &(playerPCItemPageInfo.cursorPos));
         if ((playerPCItemPageInfo.itemsAbove + playerPCItemPageInfo.cursorPos) != (playerPCItemPageInfo.count - 1))
@@ -1212,7 +1211,7 @@ static void sub_816C4FC(u8 taskId)
     s32 id;
 
     data = gTasks[taskId].data;
-    if (gMain.newKeys & SELECT_BUTTON)
+    if (JOY_NEW(SELECT_BUTTON))
     {
         ListMenuGetScrollAndRow(data[5], &(playerPCItemPageInfo.itemsAbove), &(playerPCItemPageInfo.cursorPos));
         ItemStorage_DoItemSwap(taskId, FALSE);
@@ -1227,7 +1226,7 @@ static void sub_816C4FC(u8 taskId)
     case LIST_NOTHING_CHOSEN:
         break;
     case LIST_CANCEL:
-        if (gMain.newKeys & A_BUTTON)
+        if (JOY_NEW(A_BUTTON))
         {
             ItemStorage_DoItemSwap(taskId, FALSE);
         }
@@ -1332,7 +1331,7 @@ static void ItemStorage_HandleQuantityRolling(u8 taskId)
         sub_816C6BC(sub_816BC7C(4), data[2], STR_CONV_MODE_LEADING_ZEROS, 8, 1, 3);
     else
     {
-        if (gMain.newKeys & A_BUTTON)
+        if (JOY_NEW(A_BUTTON))
         {
             PlaySE(SE_SELECT);
             sub_816BCC4(4);
@@ -1341,7 +1340,7 @@ static void ItemStorage_HandleQuantityRolling(u8 taskId)
             else
                 ItemStorage_DoItemToss(taskId);
         }
-        else if (gMain.newKeys & B_BUTTON)
+        else if (JOY_NEW(B_BUTTON))
         {
             PlaySE(SE_SELECT);
             sub_816BCC4(4);
@@ -1412,7 +1411,7 @@ static void ItemStorage_HandleRemoveItem(u8 taskId)
     s16 *data;
 
     data = gTasks[taskId].data;
-    if (gMain.newKeys & (A_BUTTON | B_BUTTON))
+    if (JOY_NEW(A_BUTTON | B_BUTTON))
     {
         RemovePCItem((playerPCItemPageInfo.cursorPos + playerPCItemPageInfo.itemsAbove), data[2]);
         DestroyListMenuTask(data[5], &(playerPCItemPageInfo.itemsAbove), &(playerPCItemPageInfo.cursorPos));
@@ -1429,7 +1428,7 @@ static void ItemStorage_WaitPressHandleResumeProcessInput(u8 taskId)
     s16 *data;
 
     data = gTasks[taskId].data;
-    if (gMain.newKeys & (A_BUTTON | B_BUTTON))
+    if (JOY_NEW(A_BUTTON | B_BUTTON))
     {
         ItemStorage_PrintItemPcResponse(ItemStorage_GetItemPcResponse(gSaveBlock1Ptr->pcItems[(playerPCItemPageInfo.itemsAbove + playerPCItemPageInfo.cursorPos)].itemId));
         ItemStorage_StartScrollIndicatorAndProcessInput(taskId);

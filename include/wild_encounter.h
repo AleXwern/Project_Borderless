@@ -6,6 +6,10 @@
 #define ROCK_WILD_COUNT     5
 #define FISH_WILD_COUNT     10
 
+// AXW reporposed struct to work in following way:
+// Old: Level range is max-min
+// New: Minimun min minLevel and maximun is minLevel+maxLevel
+// Species is untouched
 struct WildPokemon
 {
     u8 minLevel;

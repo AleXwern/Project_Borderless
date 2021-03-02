@@ -26,7 +26,6 @@
 #include "item_menu_icons.h"
 #include "decompress.h"
 #include "international_string_util.h"
-#include "constants/berry.h"
 #include "constants/items.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
@@ -186,7 +185,7 @@ static void CB2_BerryTagScreen(void)
     RunTasks();
     AnimateSprites();
     BuildOamBuffer();
-    do_scheduled_bg_tilemap_copies_to_vram();
+    DoScheduledBgTilemapCopiesToVram();
     UpdatePaletteFade();
 }
 
@@ -217,7 +216,7 @@ static bool8 InitBerryTagScreen(void)
     case 0:
         SetVBlankHBlankCallbacksToNull();
         ResetVramOamAndBgCntRegs();
-        clear_scheduled_bg_copies_to_vram();
+        ClearScheduledBgCopiesToVram();
         gMain.state++;
         break;
     case 1:
@@ -536,12 +535,12 @@ static void Task_HandleInput(u8 taskId)
 {
     if (!gPaletteFade.active)
     {
-        u16 arrowKeys = gMain.newAndRepeatedKeys & DPAD_ANY;
+        u16 arrowKeys = JOY_REPEAT(DPAD_ANY);
         if (arrowKeys == DPAD_UP)
             TryChangeDisplayedBerry(taskId, -1);
         else if (arrowKeys == DPAD_DOWN)
             TryChangeDisplayedBerry(taskId, 1);
-        else if (gMain.newKeys & (A_BUTTON | B_BUTTON))
+        else if (JOY_NEW(A_BUTTON | B_BUTTON))
             PrepareToCloseBerryTagScreen(taskId);
     }
 }

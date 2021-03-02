@@ -123,6 +123,8 @@ clean: tidy
 	rm -f $(SONG_OBJS) $(MID_OBJS) $(MID_SUBDIR)/*.s
 	find . \( -iname '*.1bpp' -o -iname '*.4bpp' -o -iname '*.8bpp' -o -iname '*.gbapal' -o -iname '*.lz' -o -iname '*.latfont' -o -iname '*.hwjpnfont' -o -iname '*.fwjpnfont' \) -exec rm {} +
 
+re: clean all
+
 tidy:
 	rm -f $(ROM) $(ELF) $(MAP)
 	rm -r build/*

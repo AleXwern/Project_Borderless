@@ -21,8 +21,8 @@
 #include "constants/items.h"
 #include "constants/layouts.h"
 #include "constants/maps.h"
-#include "constants/species.h"
 #include "constants/weather.h"
+#include "trainer_card.h"
 
 extern const u8 EventScript_RepelWoreOff[];
 
@@ -185,13 +185,6 @@ static u8 ChooseWildMonIndex_WaterRock(void)
         return 4;
 }
 
-enum
-{
-    OLD_ROD,
-    GOOD_ROD,
-    SUPER_ROD
-};
-
 static u8 ChooseWildMonIndex_Fishing(u8 rod)
 {
     u8 wildMonIndex = 0;
@@ -233,23 +226,19 @@ static u8 ChooseWildMonIndex_Fishing(u8 rod)
 static u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon)
 {
     u8 min;
-    u8 max;
     u8 range;
     u8 rand;
+	u8 base;
 
-    // Make sure minimum level is less than maximum level
-    if (wildPokemon->maxLevel >= wildPokemon->minLevel)
-    {
-        min = wildPokemon->minLevel;
-        max = wildPokemon->maxLevel;
-    }
-    else
-    {
-        min = wildPokemon->maxLevel;
-        max = wildPokemon->minLevel;
-    }
-    range = max - min + 1;
+	// Make sure minimum level is less than maximum level
+    range = wildPokemon->maxLevel + 1;
     rand = Random() % range;
+	base = getBaseWildLevel();
+	min = getAveragePartyLevel() * 0.6;
+	if (base < min)
+		base = min;
+	if (base < wildPokemon->minLevel)	//For legendaries and other specials
+		base = wildPokemon->minLevel;
 
     // check ability for max level mon
     if (!GetMonData(&gPlayerParty[0], MON_DATA_SANITY_IS_EGG))
@@ -258,14 +247,14 @@ static u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon)
         if (ability == ABILITY_HUSTLE || ability == ABILITY_VITAL_SPIRIT || ability == ABILITY_PRESSURE)
         {
             if (Random() % 2 == 0)
-                return max;
+                return base + range;
 
             if (rand != 0)
                 rand--;
         }
     }
 
-    return min + rand;
+    return base + rand;
 }
 
 static u16 GetCurrentMapWildMonHeaderId(void)
@@ -303,29 +292,27 @@ static u8 PickWildMonNature(void)
     u8 i;
     u8 j;
     struct Pokeblock *safariPokeblock;
-    u8 natures[25];
+    u8 natures[NUM_NATURES];
 
     if (GetSafariZoneFlag() == TRUE && Random() % 100 < 80)
     {
         safariPokeblock = SafariZoneGetActivePokeblock();
         if (safariPokeblock != NULL)
         {
-            for (i = 0; i < 25; i++)
+            for (i = 0; i < NUM_NATURES; i++)
                 natures[i] = i;
-            for (i = 0; i < 24; i++)
+            for (i = 0; i < NUM_NATURES - 1; i++)
             {
-                for (j = i + 1; j < 25; j++)
+                for (j = i + 1; j < NUM_NATURES; j++)
                 {
                     if (Random() & 1)
                     {
-                        u8 temp = natures[i];
-
-                        natures[i] = natures[j];
-                        natures[j] = temp;
+                        u8 temp;
+                        SWAP(natures[i], natures[j], temp);
                     }
                 }
             }
-            for (i = 0; i < 25; i++)
+            for (i = 0; i < NUM_NATURES; i++)
             {
                 if (PokeblockGetGain(natures[i], safariPokeblock) > 0)
                     return natures[i];
@@ -337,11 +324,11 @@ static u8 PickWildMonNature(void)
         && GetMonAbility(&gPlayerParty[0]) == ABILITY_SYNCHRONIZE
         && Random() % 2 == 0)
     {
-        return GetMonData(&gPlayerParty[0], MON_DATA_PERSONALITY) % 25;
+        return GetMonData(&gPlayerParty[0], MON_DATA_PERSONALITY) % NUM_NATURES;
     }
 
     // random nature
-    return Random() % 25;
+    return Random() % NUM_NATURES;
 }
 
 static void CreateWildMon(u16 species, u8 level)
@@ -397,6 +384,7 @@ static bool8 TryGenerateWildMon(const struct WildPokemonInfo *wildMonInfo, u8 ar
 {
     u8 wildMonIndex = 0;
     u8 level;
+	u16	species;
 
     switch (area)
     {
@@ -420,6 +408,11 @@ static bool8 TryGenerateWildMon(const struct WildPokemonInfo *wildMonInfo, u8 ar
     }
 
     level = ChooseWildMonLevel(&wildMonInfo->wildPokemon[wildMonIndex]);
+
+	species = wildMonInfo->wildPokemon[wildMonIndex].species;
+	if (Random() % 50 < level)
+		species = autoEvolve(species, level, Random() % 42069);
+
     if (flags & WILD_CHECK_REPEL && !IsWildLevelAllowedByRepel(level))
         return FALSE;
     if (gMapHeader.mapLayoutId != LAYOUT_BATTLE_FRONTIER_BATTLE_PIKE_ROOM_WILD_MONS && flags & WILD_CHECK_KEEN_EYE && !IsAbilityAllowingEncounter(level))

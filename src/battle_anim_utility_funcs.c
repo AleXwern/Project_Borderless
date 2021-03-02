@@ -40,10 +40,10 @@ static void AnimTask_WaitAndRestoreVisibility(u8);
 
 const u16 gUnknown_08597418 = RGB(31, 31, 31);
 
-// These belong in battle_intro.c, but there putting them there causes 2 bytes of alignment padding
+// These belong in battle_intro.c, but putting them there causes 2 bytes of alignment padding
 // between the two .rodata segments. Perhaps battle_intro.c actually belongs in this file, too.
-const u8 gUnknown_0859741A[] = {REG_OFFSET_BG0CNT, REG_OFFSET_BG1CNT, REG_OFFSET_BG2CNT, REG_OFFSET_BG3CNT};
-const u8 gUnknown_0859741E[] = {REG_OFFSET_BG0CNT, REG_OFFSET_BG1CNT, REG_OFFSET_BG2CNT, REG_OFFSET_BG3CNT};
+const u8 gBattleAnimBgCntSet[] = {REG_OFFSET_BG0CNT, REG_OFFSET_BG1CNT, REG_OFFSET_BG2CNT, REG_OFFSET_BG3CNT};
+const u8 gBattleAnimBgCntGet[] = {REG_OFFSET_BG0CNT, REG_OFFSET_BG1CNT, REG_OFFSET_BG2CNT, REG_OFFSET_BG3CNT};
 
 void AnimTask_BlendBattleAnimPal(u8 taskId)
 {
@@ -97,7 +97,7 @@ void AnimTask_BlendBattleAnimPalExclude(u8 taskId)
     for (battler = 0; battler < MAX_BATTLERS_COUNT; battler++)
     {
         if (battler != animBattlers[0] && battler != animBattlers[1] && IsBattlerSpriteVisible(battler))
-            selectedPalettes |= 0x10000 << sub_80A77AC(battler);
+            selectedPalettes |= 0x10000 << AnimDummyReturnArg(battler);
     }
 
     StartBlendAnimSpriteColor(taskId, selectedPalettes);
@@ -318,7 +318,7 @@ void AnimTask_DrawFallingWhiteLinesOnAttacker(u8 taskId)
 
     if (IsContest())
     {
-        species = gContestResources->field_18->species;
+        species = gContestResources->moveAnim->species;
     }
     else
     {
@@ -440,7 +440,7 @@ static void sub_8116F04(u8 taskId)
 
     if (IsContest())
     {
-        sAnimStatsChangeData->species = gContestResources->field_18->species;
+        sAnimStatsChangeData->species = gContestResources->moveAnim->species;
     }
     else
     {
@@ -535,9 +535,9 @@ static void sub_81170EC(u8 taskId)
     gTasks[taskId].func = sub_81172EC;
 
     if (sAnimStatsChangeData->data[0] == 0)
-        PlaySE12WithPanning(SE_W287, BattleAnimAdjustPanning2(-64));
+        PlaySE12WithPanning(SE_M_STAT_INCREASE, BattleAnimAdjustPanning2(-64));
     else
-        PlaySE12WithPanning(SE_W287B, BattleAnimAdjustPanning2(-64));
+        PlaySE12WithPanning(SE_M_STAT_DECREASE, BattleAnimAdjustPanning2(-64));
 }
 
 static void sub_81172EC(u8 taskId)
@@ -569,7 +569,7 @@ static void sub_81172EC(u8 taskId)
             if (gTasks[taskId].data[12] == 0)
             {
                 sub_80A477C(0);
-                gTasks[taskId].data[15]++;;
+                gTasks[taskId].data[15]++;
             }
         }
         break;
@@ -810,7 +810,7 @@ void sub_8117854(u8 taskId, int unused, u16 arg2, u8 battler1, u8 arg4, u8 arg5,
 
     if (IsContest())
     {
-        species = gContestResources->field_18->species;
+        species = gContestResources->moveAnim->species;
     }
     else
     {

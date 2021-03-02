@@ -140,7 +140,7 @@ void Sav2_ClearSetDefault(void)
 
 void ResetMenuAndMonGlobals(void)
 {
-    gDifferentSaveFile = 0;
+    gDifferentSaveFile = FALSE;
     ResetPokedexScrollPositions();
     ZeroPlayerPartyMons();
     ZeroEnemyPartyMons();
@@ -153,7 +153,7 @@ void NewGameInitData(void)
     if (gSaveFileStatus == SAVE_STATUS_EMPTY || gSaveFileStatus == SAVE_STATUS_CORRUPT)
         RtcReset();
 
-    gDifferentSaveFile = 1;
+    gDifferentSaveFile = TRUE;
     gSaveBlock2Ptr->encryptionKey = 0;
     ZeroPlayerPartyMons();
     ZeroEnemyPartyMons();
@@ -197,7 +197,7 @@ void NewGameInitData(void)
     WarpToTruck();
     ScriptContext2_RunNewScript(EventScript_ResetAllMapFlags);
     ResetMiniGamesResults();
-    copy_strings_to_sav1();
+    InitUnionRoomChatRegisteredTexts();
     InitLilycoveLady();
     ResetAllApprenticeData();
     ClearRankingHallRecords();

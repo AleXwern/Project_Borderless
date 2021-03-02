@@ -225,7 +225,7 @@ static void AnimConfuseRayBallBounce(struct Sprite *sprite)
     sprite->data[2] = GetBattlerSpriteCoord(gBattleAnimTarget, 2);
     sprite->data[3] = sprite->pos1.y;
     sprite->data[4] = GetBattlerSpriteCoord(gBattleAnimTarget, 3);
-    sub_80A6FD4(sprite);
+    InitAnimLinearTranslationWithSpeed(sprite);
     sprite->callback = AnimConfuseRayBallBounce_Step1;
     sprite->data[6] = 16;
     SetGpuReg(REG_OFFSET_BLDCNT, (BLDCNT_EFFECT_BLEND | BLDCNT_TGT2_ALL));
@@ -252,7 +252,7 @@ static void AnimConfuseRayBallBounce_Step1(struct Sprite *sprite)
         return;
     if (r0 <= 0)
         return;
-    PlaySE12WithPanning(SE_W109, gAnimCustomPanning);
+    PlaySE12WithPanning(SE_M_CONFUSE_RAY, gAnimCustomPanning);
 }
 
 static void AnimConfuseRayBallBounce_Step2(struct Sprite *sprite)
@@ -271,7 +271,7 @@ static void AnimConfuseRayBallBounce_Step2(struct Sprite *sprite)
     if (r2 == 0 || r2 > 196)
     {
         if (r0 > 0)
-            PlaySE(SE_W109);
+            PlaySE(SE_M_CONFUSE_RAY);
     }
 
     if (sprite->data[6] == 0)

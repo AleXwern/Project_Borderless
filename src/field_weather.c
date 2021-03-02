@@ -494,7 +494,7 @@ static void ApplyGammaShift(u8 startPalIndex, u8 numPalettes, s8 gammaIndex)
                     r = gammaTable[baseColor.r];
                     g = gammaTable[baseColor.g];
                     b = gammaTable[baseColor.b];
-                    gPlttBufferFaded[palOffset++] = (b << 10) | (g << 5) | r;
+                    gPlttBufferFaded[palOffset++] = RGB2(r, g, b);
                 }
             }
 
@@ -579,7 +579,7 @@ static void ApplyGammaShiftWithBlend(u8 startPalIndex, u8 numPalettes, s8 gammaI
                 r += ((rBlend - r) * blendCoeff) >> 4;
                 g += ((gBlend - g) * blendCoeff) >> 4;
                 b += ((bBlend - b) * blendCoeff) >> 4;
-                gPlttBufferFaded[palOffset++] = (b << 10) | (g << 5) | r;
+                gPlttBufferFaded[palOffset++] = RGB2(r, g, b);
             }
         }
 
@@ -636,7 +636,7 @@ static void ApplyDroughtGammaShiftWithBlend(s8 gammaIndex, u8 blendCoeff, u16 bl
                 g2 += ((gBlend - g2) * blendCoeff) >> 4;
                 b2 += ((bBlend - b2) * blendCoeff) >> 4;
 
-                gPlttBufferFaded[palOffset++] = (b2 << 10) | (g2 << 5) | r2;
+                gPlttBufferFaded[palOffset++] = RGB2(r2, g2, b2);
             }
         }
     }
@@ -678,7 +678,7 @@ static void ApplyFogBlend(u8 blendCoeff, u16 blendColor)
                 g += ((gBlend - g) * blendCoeff) >> 4;
                 b += ((bBlend - b) * blendCoeff) >> 4;
 
-                gPlttBufferFaded[palOffset] = (b << 10) | (g << 5) | r;
+                gPlttBufferFaded[palOffset] = RGB2(r, g, b);
                 palOffset++;
             }
         }
@@ -1038,13 +1038,13 @@ void SetRainStrengthFromSoundEffect(u16 soundEffect)
     {
         switch (soundEffect)
         {
-        case SE_T_KOAME:
+        case SE_RAIN:
             gWeatherPtr->rainStrength = 0;
             break;
-        case SE_T_OOAME:
+        case SE_DOWNPOUR:
             gWeatherPtr->rainStrength = 1;
             break;
-        case SE_T_AME:
+        case SE_THUNDERSTORM:
             gWeatherPtr->rainStrength = 2;
             break;
         default:
@@ -1062,14 +1062,14 @@ void PlayRainStoppingSoundEffect(void)
         switch (gWeatherPtr->rainStrength)
         {
         case 0:
-            PlaySE(SE_T_KOAME_E);
+            PlaySE(SE_RAIN_STOP);
             break;
         case 1:
-            PlaySE(SE_T_OOAME_E);
+            PlaySE(SE_DOWNPOUR_STOP);
             break;
         case 2:
         default:
-            PlaySE(SE_T_AME_E);
+            PlaySE(SE_THUNDERSTORM_STOP);
             break;
         }
     }

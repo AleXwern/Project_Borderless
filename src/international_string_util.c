@@ -136,7 +136,7 @@ void PadNameString(u8 *dest, u8 padChar)
         while (length < PLAYER_NAME_LENGTH - 1)
         {
             dest[length] = EXT_CTRL_CODE_BEGIN;
-            dest[length + 1] = EXT_CTRL_CODE_UNKNOWN_7;
+            dest[length + 1] = EXT_CTRL_CODE_RESET_SIZE;
             length += 2;
         }
     }
@@ -214,7 +214,7 @@ int sub_81DB604(u8 *str)
     if (str[0] == EXT_CTRL_CODE_BEGIN && str[1] == EXT_CTRL_CODE_JPN)
         return LANGUAGE_JAPANESE;
     else
-        return LANGUAGE_ENGLISH;
+        return GAME_LANGUAGE;
 }
 
 void sub_81DB620(int windowId, int columnStart, int rowStart, int numFillTiles, int numRows)

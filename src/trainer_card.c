@@ -25,9 +25,8 @@
 #include "graphics.h"
 #include "pokemon_icon.h"
 #include "trainer_pokemon_sprites.h"
-#include "script_pokemon_util_80F87D8.h"
+#include "contest_util.h"
 #include "constants/songs.h"
-#include "constants/flags.h"
 #include "constants/game_stat.h"
 #include "constants/battle_frontier.h"
 #include "constants/rgb.h"
@@ -312,6 +311,104 @@ static const u8 sTrainerPicFacilityClass[][GENDER_COUNT] =
     }
 };
 
+// AXW: Get the number of badges owned.
+// The purpose is to scale and/or select a spesific team for each trainer
+// based on no. of badges.
+u8		getBadgeCount(void)
+{
+	u8	i;
+	u8	count;
+	u16	badgeFlag;
+
+	count = 0;
+	for (i = 0, badgeFlag = FLAG_BADGE01_GET; badgeFlag < FLAG_BADGE01_GET + NUM_BADGES; badgeFlag++, i++)
+    {
+        if (FlagGet(badgeFlag))
+            count++;
+    }
+	return (count);
+}
+
+u8		getBaseWildLevel(void)
+{
+	u8	badges;
+	u8	level;
+
+	badges = getBadgeCount();
+	level = 5;
+	switch (badges)
+	{
+		case 1:
+			level = 10;
+			break;
+		case 2:
+			level = 14;
+			break;
+		case 3:
+			level = 17;
+			break;
+		case 4:
+			level = 21;
+			break;
+		case 5:
+			level = 25;
+			break;
+		case 6:
+			level = 28;
+			break;
+		case 7:
+			level = 33;
+			break;
+		case 8:
+			level = 40;
+			break;
+		default:
+			level = 5;
+			break;
+	}
+	return (level);
+}
+
+u8		getBaseTrainerLevel(void)
+{
+	u8	badges;
+	u8	level;
+
+	badges = getBadgeCount();
+	level = 5;
+	switch (badges)
+	{
+		case 1:
+			level = 12;
+			break;
+		case 2:
+			level = 16;
+			break;
+		case 3:
+			level = 20;
+			break;
+		case 4:
+			level = 24;
+			break;
+		case 5:
+			level = 28;
+			break;
+		case 6:
+			level = 31;
+			break;
+		case 7:
+			level = 40;
+			break;
+		case 8:
+			level = 45;
+			break;
+		default:
+			level = 5;
+			break;
+	}
+	return (level);
+}
+
 static bool8 (*const sTrainerCardFlipTasks[])(struct Task *) =
 {
     Task_BeginCardFlip,
@@ -423,7 +520,7 @@ static void Task_TrainerCard(u8 taskId)
     case 8:
         if (!UpdatePaletteFade() && !IsDma3ManagerBusyWithBgCopy())
         {
-            PlaySE(SE_RG_CARD3);
+            PlaySE(SE_RG_CARD_OPEN);
             sData->mainState = STATE_HANDLE_INPUT_FRONT;
         }
         break;
@@ -439,13 +536,13 @@ static void Task_TrainerCard(u8 taskId)
             DrawTrainerCardWindow(1);
             sData->timeColonNeedDraw = FALSE;
         }
-        if (gMain.newKeys & A_BUTTON)
+        if (JOY_NEW(A_BUTTON))
         {
             FlipTrainerCard();
-            PlaySE(SE_RG_CARD1);
+            PlaySE(SE_RG_CARD_FLIP);
             sData->mainState = STATE_WAIT_FLIP_TO_BACK;
         }
-        else if (gMain.newKeys & B_BUTTON)
+        else if (JOY_NEW(B_BUTTON))
         {
             if (gReceivedRemoteLinkPlayers && sData->isLink && InUnionRoom() == TRUE)
             {
@@ -461,12 +558,12 @@ static void Task_TrainerCard(u8 taskId)
     case STATE_WAIT_FLIP_TO_BACK:
         if (IsCardFlipTaskActive() && sub_8087598() != TRUE)
         {
-            PlaySE(SE_RG_CARD3);
+            PlaySE(SE_RG_CARD_OPEN);
             sData->mainState = STATE_HANDLE_INPUT_BACK;
         }
         break;
     case STATE_HANDLE_INPUT_BACK:
-        if (gMain.newKeys & B_BUTTON)
+        if (JOY_NEW(B_BUTTON))
         {
             if (gReceivedRemoteLinkPlayers && sData->isLink && InUnionRoom() == TRUE)
             {
@@ -481,10 +578,10 @@ static void Task_TrainerCard(u8 taskId)
             {
                 FlipTrainerCard();
                 sData->mainState = STATE_WAIT_FLIP_TO_FRONT;
-                PlaySE(SE_RG_CARD1);
+                PlaySE(SE_RG_CARD_FLIP);
             }
         }
-        else if (gMain.newKeys & A_BUTTON)
+        else if (JOY_NEW(A_BUTTON))
         {
            if (gReceivedRemoteLinkPlayers && sData->isLink && InUnionRoom() == TRUE)
            {
@@ -498,7 +595,7 @@ static void Task_TrainerCard(u8 taskId)
         }
         break;
     case STATE_WAIT_LINK_PARTNER:
-        sub_800AC34();
+        SetCloseLinkCallback();
         DrawDialogueFrame(0, 1);
         AddTextPrinterParameterized(0, 1, gText_WaitingTrainerFinishReading, 0, 1, 255, 0);
         CopyWindowToVram(0, 3);
@@ -519,7 +616,7 @@ static void Task_TrainerCard(u8 taskId)
         if (IsCardFlipTaskActive() && sub_8087598() != TRUE)
         {
             sData->mainState = STATE_HANDLE_INPUT_FRONT;
-            PlaySE(SE_RG_CARD3);
+            PlaySE(SE_RG_CARD_OPEN);
         }
         break;
    }
@@ -1731,7 +1828,7 @@ static bool8 Task_SetCardFlipped(struct Task* task)
     sData->onBack ^= 1;
     task->tFlipState++;
     sData->allowDMACopy = TRUE;
-    PlaySE(SE_RG_CARD2);
+    PlaySE(SE_RG_CARD_FLIPPING);
     return FALSE;
 }
 

@@ -1632,7 +1632,7 @@ static void AirCutterProjectileStep1(u8 taskId)
         gTasks[taskId].data[gTasks[taskId].data[1] + 13] = spriteId;
         gTasks[taskId].data[0] = gTasks[taskId].data[3];
         gTasks[taskId].data[1]++;
-        PlaySE12WithPanning(SE_W059B, BattleAnimAdjustPanning(-63));
+        PlaySE12WithPanning(SE_M_BLIZZARD2, BattleAnimAdjustPanning(-63));
         if (gTasks[taskId].data[1] > 2)
             gTasks[taskId].func = AirCutterProjectileStep2;
     }
@@ -1784,7 +1784,7 @@ static void AnimCoinThrow(struct Sprite *sprite)
     sprite->data[0] = gBattleAnimArgs[4];
     sprite->data[2] = r6;
     sprite->data[4] = r7;
-    sprite->callback = sub_80A7000;
+    sprite->callback = InitAnimLinearTranslationWithSpeedAndPos;
     StoreSpriteCallbackInData6(sprite, DestroyAnimSprite);
 }
 
@@ -1829,7 +1829,7 @@ static void AnimBulletSeed_Step1(struct Sprite *sprite)
     int i;
     u16 rand;
     s16* ptr;
-    PlaySE12WithPanning(SE_W030, BattleAnimAdjustPanning(63));
+    PlaySE12WithPanning(SE_M_HORN_ATTACK, BattleAnimAdjustPanning(63));
     sprite->pos1.x += sprite->pos2.x;
     sprite->pos1.y += sprite->pos2.y;
     sprite->pos2.y = 0;
@@ -2502,7 +2502,7 @@ static void AnimPencil_Step(struct Sprite *sprite)
             sprite->pos1.y -= 1;
             sprite->data[2]++;
             if (sprite->data[2] % 10 == 0)
-                PlaySE12WithPanning(SE_W166, sprite->data[6]);
+                PlaySE12WithPanning(SE_M_SKETCH, sprite->data[6]);
         }
         sprite->data[4] += sprite->data[3];
         if (sprite->data[4] > 31)
@@ -2569,7 +2569,7 @@ static void AnimBlendThinRing(struct Sprite *sprite)
     sprite->callback(sprite);
 }
 
-void sub_8105284(struct Sprite *sprite)
+static void AnimHyperVoiceRing_WaitEnd(struct Sprite *sprite)
 {
     if (AnimTranslateLinear(sprite))
     {
@@ -2659,7 +2659,7 @@ static void AnimHyperVoiceRing(struct Sprite *sprite)
     sprite->data[4] = sp1;
     sprite->data[0] = gBattleAnimArgs[0];
     InitAnimLinearTranslation(sprite);
-    sprite->callback = sub_8105284;
+    sprite->callback = AnimHyperVoiceRing_WaitEnd;
     sprite->callback(sprite);
 }
 
@@ -3523,7 +3523,7 @@ static void AnimAngel(struct Sprite *sprite)
         DestroyAnimSprite(sprite);
 }
 
-static void sub_8106A64(struct Sprite *sprite)
+static void AnimPinkHeart_Step(struct Sprite *sprite)
 {
     sprite->data[5]++;
     sprite->pos2.x = Sin(sprite->data[3], 5);
@@ -3552,7 +3552,7 @@ static void AnimPinkHeart(struct Sprite *sprite)
         sprite->data[3] = (sprite->data[3] + 3) & 0xFF;
         if (sprite->data[3] > 70)
         {
-            sprite->callback = sub_8106A64;
+            sprite->callback = AnimPinkHeart_Step;
             sprite->pos1.x += sprite->pos2.x;
             sprite->pos1.y += sprite->pos2.y;
             sprite->pos2.x = 0;
