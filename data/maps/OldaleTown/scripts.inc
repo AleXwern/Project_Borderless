@@ -75,8 +75,12 @@ OldaleTown_EventScript_GoToMartEast:: @ 81E8F75
 
 OldaleTown_EventScript_ExplainPokemonMart:: @ 81E8F8C
 	msgbox OldaleTown_Text_ThisIsAPokemonMart, MSGBOX_DEFAULT
+<<<<<<< HEAD
 	giveitem ITEM_POTION, 5
 	giveitem ITEM_POKE_BALL, 5
+=======
+	giveitem ITEM_POTION
+>>>>>>> upstream/master
 	compare VAR_RESULT, FALSE
 	goto_if_eq OldaleTown_EventScript_BagIsFull
 	msgbox OldaleTown_Text_PotionExplanation, MSGBOX_DEFAULT
