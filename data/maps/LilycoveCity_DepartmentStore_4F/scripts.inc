@@ -25,10 +25,31 @@ LilycoveCity_DepartmentStore_4F_EventScript_ClerkLeft:: @ 821FE06
 
 	.align 2
 LilycoveCity_DepartmentStore_4F_Pokemart_AttackTMs: @ 821FE20
-	.2byte ITEM_TM38  @ Fire Blast
-	.2byte ITEM_TM25  @ Thunder
-	.2byte ITEM_TM14  @ Blizzard
-	.2byte ITEM_TM15  @ Hyper Beam
+	.2byte ITEM_TM01
+	.2byte ITEM_TM02
+	.2byte ITEM_TM03
+	.2byte ITEM_TM04
+	.2byte ITEM_TM05
+	.2byte ITEM_TM06
+	.2byte ITEM_TM07
+	.2byte ITEM_TM08
+	.2byte ITEM_TM09
+	.2byte ITEM_TM10
+	.2byte ITEM_TM11
+	.2byte ITEM_TM12
+	.2byte ITEM_TM13
+	.2byte ITEM_TM14
+	.2byte ITEM_TM15
+	.2byte ITEM_TM16
+	.2byte ITEM_TM17
+	.2byte ITEM_TM18
+	.2byte ITEM_TM19
+	.2byte ITEM_TM20
+	.2byte ITEM_TM21
+	.2byte ITEM_TM22
+	.2byte ITEM_TM23
+	.2byte ITEM_TM24
+	.2byte ITEM_TM25
 	.2byte ITEM_NONE
 	release
 	end
@@ -45,10 +66,31 @@ LilycoveCity_DepartmentStore_4F_EventScript_ClerkRight:: @ 821FE2C
 
 	.align 2
 LilycoveCity_DepartmentStore_4F_Pokemart_DefenseTMs: @ 821FE44
-	.2byte ITEM_TM17  @ Protect
-	.2byte ITEM_TM20  @ Safeguard
-	.2byte ITEM_TM33  @ Reflect
-	.2byte ITEM_TM16  @ Light Screen
+	.2byte ITEM_TM26
+	.2byte ITEM_TM27
+	.2byte ITEM_TM28
+	.2byte ITEM_TM29
+	.2byte ITEM_TM30
+	.2byte ITEM_TM31
+	.2byte ITEM_TM32
+	.2byte ITEM_TM33
+	.2byte ITEM_TM34
+	.2byte ITEM_TM35
+	.2byte ITEM_TM36
+	.2byte ITEM_TM37
+	.2byte ITEM_TM38
+	.2byte ITEM_TM39
+	.2byte ITEM_TM40
+	.2byte ITEM_TM41
+	.2byte ITEM_TM42
+	.2byte ITEM_TM43
+	.2byte ITEM_TM44
+	.2byte ITEM_TM45
+	.2byte ITEM_TM46
+	.2byte ITEM_TM47
+	.2byte ITEM_TM48
+	.2byte ITEM_TM49
+	.2byte ITEM_TM50
 	.2byte ITEM_NONE
 	release
 	end

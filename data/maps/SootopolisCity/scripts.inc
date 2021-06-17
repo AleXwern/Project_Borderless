@@ -46,7 +46,7 @@ SootopolisCity_EventScript_LockHouseDoors:: @ 81E5693
 	return
 
 SootopolisCity_EventScript_LockGymDoor:: @ 81E56E5
-	setmetatile 31, 32, METATILE_Sootopolis_GymDoor_Closed, 1
+	@setmetatile 31, 32, METATILE_Sootopolis_GymDoor_Closed, 1
 	return
 
 SootopolisCity_OnTransition: @ 81E56EF
