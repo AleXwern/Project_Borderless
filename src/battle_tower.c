@@ -36,7 +36,6 @@
 #include "constants/event_objects.h"
 #include "constants/moves.h"
 #include "constants/easy_chat.h"
-#include "constants/tv.h"
 
 extern const u8 MossdeepCity_SpaceCenter_2F_EventScript_MaxieTrainer[];
 extern const u8 MossdeepCity_SpaceCenter_2F_EventScript_TabithaTrainer[];
@@ -878,12 +877,8 @@ static const u16 sFrontierTrainerIdRangesHard[][2] =
     {FRONTIER_TRAINER_JAXON,   FRONTIER_TRAINER_GRETEL}, // 200 - 299
 };
 
-// Trainer IDs? Don't make sense as part of previous array, min/max relationship reversed and never accessed
-static const u16 sUnused_085DFA1A[][2] =
-{
-    {179, 141}, // FRONTIER_TRAINER_ALISON - FRONTIER_TRAINER_KAYDEN
-    {200, 183}, // FRONTIER_TRAINER_JAXON  - FRONTIER_TRAINER_HUNTER
-};
+// Unknown, unused data
+static const u16 sUnused[] = { 179, 141, 200, 183 };
 
 static const u8 sBattleTowerPartySizes[FRONTIER_MODE_COUNT] =
 {

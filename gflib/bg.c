@@ -9,19 +9,19 @@
 struct BgControl
 {
     struct BgConfig {
-        u16 visible:1;
-        u16 unknown_1:1;
-        u16 screenSize:2;
-        u16 priority:2;
-        u16 mosaic:1;
-        u16 wraparound:1;
+        u8 visible:1;
+        u8 unknown_1:1;
+        u8 screenSize:2;
+        u8 priority:2;
+        u8 mosaic:1;
+        u8 wraparound:1;
 
-        u16 charBaseIndex:2;
-        u16 mapBaseIndex:5;
-        u16 paletteMode:1;
+        u8 charBaseIndex:2;
+        u8 mapBaseIndex:5;
+        u8 paletteMode:1;
 
-        u8 unknown_2;
-        u8 unknown_3;
+        u8 unknown_2; // Assigned to but never read
+        u8 unknown_3; // Assigned to but never read
     } configs[NUM_BACKGROUNDS];
 
     u16 bgVisibilityAndMode;
@@ -55,7 +55,7 @@ void ResetBgs(void)
 
 static void SetBgModeInternal(u8 bgMode)
 {
-    sGpuBgConfigs.bgVisibilityAndMode &= 0xFFF8;
+    sGpuBgConfigs.bgVisibilityAndMode &= ~0x7;
     sGpuBgConfigs.bgVisibilityAndMode |= bgMode;
 }
 
@@ -66,13 +66,11 @@ u8 GetBgMode(void)
 
 void ResetBgControlStructs(void)
 {
-    struct BgConfig* bgConfigs = &sGpuBgConfigs.configs[0];
-    struct BgConfig zeroedConfig = sZeroedBgControlStruct;
     int i;
 
     for (i = 0; i < NUM_BACKGROUNDS; i++)
     {
-        bgConfigs[i] = zeroedConfig;
+        sGpuBgConfigs.configs[i] = sZeroedBgControlStruct;
     }
 }
 
@@ -102,17 +100,17 @@ static void SetBgControlAttributes(u8 bg, u8 charBaseIndex, u8 mapBaseIndex, u8 
     {
         if (charBaseIndex != 0xFF)
         {
-            sGpuBgConfigs.configs[bg].charBaseIndex = charBaseIndex & 0x3;
+            sGpuBgConfigs.configs[bg].charBaseIndex = charBaseIndex;
         }
 
         if (mapBaseIndex != 0xFF)
         {
-            sGpuBgConfigs.configs[bg].mapBaseIndex = mapBaseIndex & 0x1F;
+            sGpuBgConfigs.configs[bg].mapBaseIndex = mapBaseIndex;
         }
 
         if (screenSize != 0xFF)
         {
-            sGpuBgConfigs.configs[bg].screenSize = screenSize & 0x3;
+            sGpuBgConfigs.configs[bg].screenSize = screenSize;
         }
 
         if (paletteMode != 0xFF)
@@ -122,12 +120,12 @@ static void SetBgControlAttributes(u8 bg, u8 charBaseIndex, u8 mapBaseIndex, u8 
 
         if (priority != 0xFF)
         {
-            sGpuBgConfigs.configs[bg].priority = priority & 0x3;
+            sGpuBgConfigs.configs[bg].priority = priority;
         }
 
         if (mosaic != 0xFF)
         {
-            sGpuBgConfigs.configs[bg].mosaic = mosaic & 0x1;
+            sGpuBgConfigs.configs[bg].mosaic = mosaic;
         }
 
         if (wraparound != 0xFF)
@@ -175,36 +173,30 @@ u8 LoadBgVram(u8 bg, const void *src, u16 size, u16 destOffset, u8 mode)
     u16 offset;
     s8 cursor;
 
-    if (!IsInvalidBg(bg) && sGpuBgConfigs.configs[bg].visible)
-    {
-        switch (mode)
-        {
-        case 0x1:
-            offset = sGpuBgConfigs.configs[bg].charBaseIndex * BG_CHAR_SIZE;
-            break;
-        case 0x2:
-            offset = sGpuBgConfigs.configs[bg].mapBaseIndex * BG_SCREEN_SIZE;
-            break;
-        default:
-            cursor = -1;
-            goto end;
-        }
+    if (IsInvalidBg(bg) || !sGpuBgConfigs.configs[bg].visible)
+        return -1;
 
+    switch (mode)
+    {
+    case 0x1:
+        offset = sGpuBgConfigs.configs[bg].charBaseIndex * BG_CHAR_SIZE;
         offset = destOffset + offset;
-
         cursor = RequestDma3Copy(src, (void*)(offset + BG_VRAM), size, 0);
-
         if (cursor == -1)
-        {
             return -1;
-        }
-    }
-    else
-    {
-       return -1;
+        break;
+    case 0x2:
+        offset = sGpuBgConfigs.configs[bg].mapBaseIndex * BG_SCREEN_SIZE;
+        offset = destOffset + offset;
+        cursor = RequestDma3Copy(src, (void*)(offset + BG_VRAM), size, 0);
+        if (cursor == -1)
+            return -1;
+        break;
+    default:
+        cursor = -1;
+        break;
     }
 
-end:
     return cursor;
 }
 
@@ -254,17 +246,17 @@ static void SetBgAffineInternal(u8 bg, s32 srcCenterX, s32 srcCenterY, s16 dispC
 
     switch (sGpuBgConfigs.bgVisibilityAndMode & 0x7)
     {
+    default:
+    case 0:
+        return;
     case 1:
         if (bg != 2)
             return;
         break;
     case 2:
-        if (bg < 2 || bg >= NUM_BACKGROUNDS)
+        if (bg != 2 && bg != 3)
             return;
         break;
-    case 0:
-    default:
-        return;
     }
 
     src.texX = srcCenterX;
@@ -697,7 +689,7 @@ s32 ChangeBgY(u8 bg, s32 value, u8 op)
     return sGpuBgConfigs2[bg].bg_y;
 }
 
-s32 ChangeBgY_ScreenOff(u8 bg, u32 value, u8 op)
+s32 ChangeBgY_ScreenOff(u8 bg, s32 value, u8 op)
 {
     u8 mode;
     u16 temp1;

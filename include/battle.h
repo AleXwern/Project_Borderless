@@ -40,16 +40,17 @@
 #define MAX_TRAINER_ITEMS 4
 
 // array entries for battle communication
-#define MULTIUSE_STATE          0x0
-#define CURSOR_POSITION         0x1
-#define TASK_ID                 0x1 // task Id and cursor position share the same field
-#define SPRITES_INIT_STATE1     0x1 // shares the Id as well
-#define SPRITES_INIT_STATE2     0x2
-#define MOVE_EFFECT_BYTE        0x3
-#define ACTIONS_CONFIRMED_COUNT 0x4
-#define MULTISTRING_CHOOSER     0x5
-#define MSG_DISPLAY             0x7
-#define BATTLE_COMMUNICATION_ENTRIES_COUNT  0x8
+#define MULTIUSE_STATE          0
+#define CURSOR_POSITION         1
+#define TASK_ID                 1 // task Id and cursor position share the same field
+#define SPRITES_INIT_STATE1     1 // shares the Id as well
+#define SPRITES_INIT_STATE2     2
+#define MOVE_EFFECT_BYTE        3
+#define ACTIONS_CONFIRMED_COUNT 4
+#define MULTISTRING_CHOOSER     5
+#define MISS_TYPE               6
+#define MSG_DISPLAY             7
+#define BATTLE_COMMUNICATION_ENTRIES_COUNT  8
 
 #define MOVE_TARGET_SELECTED            0x0
 #define MOVE_TARGET_DEPENDS             0x1
@@ -344,6 +345,15 @@ struct BattleTvMovePoints
     s16 points[2][PARTY_SIZE * 4];
 };
 
+struct LinkBattlerHeader
+{
+    u8 versionSignatureLo;
+    u8 versionSignatureHi;
+    u8 vsScreenHealthFlagsLo;
+    u8 vsScreenHealthFlagsHi;
+    struct BattleEnigmaBerry battleEnigmaBerry;
+};
+
 struct BattleStruct
 {
     u8 turnEffectsTracker;
@@ -419,11 +429,10 @@ struct BattleStruct
     u8 givenExpMons; // Bits for enemy party's pokemon that gave exp to player's party.
     u8 lastTakenMoveFrom[MAX_BATTLERS_COUNT * MAX_BATTLERS_COUNT * 2]; // a 3-D array [target][attacker][byte]
     u16 castformPalette[MAX_BATTLERS_COUNT][16];
-    u8 field_180; // weird field, used in battle_main.c, once accessed as an array of u32 overwriting the field below
-    u8 field_181;
-    u8 vsScreenHealthFlagsLo;
-    u8 vsScreenHealthFlagsHi; // Last bit is 'has frontier pass'
-    struct BattleEnigmaBerry battleEnigmaBerry;
+    union {
+        struct LinkBattlerHeader linkBattlerHeader;
+        u32 battleVideo[2];
+    } multiBuffer;
     u8 wishPerishSongState;
     u8 wishPerishSongBattlerId;
     bool8 overworldWeatherDone;

@@ -452,6 +452,10 @@ void SortSprites(void)
             // Although this doesn't result in a bug in the ROM,
             // the behavior is undefined.
             j--;
+#ifdef UBFIX
+            if (j == 0)
+                break;
+#endif
 
             sprite1 = &gSprites[sSpriteOrder[j - 1]];
             sprite2 = &gSprites[sSpriteOrder[j]];
@@ -661,8 +665,7 @@ void ResetOamRange(u8 a, u8 b)
 
     for (i = a; i < b; i++)
     {
-        struct OamData *oamBuffer = gMain.oamBuffer;
-        oamBuffer[i] = *(struct OamData *)&gDummyOamData;
+        gMain.oamBuffer[i] = *(struct OamData *)&gDummyOamData;
     }
 }
 
@@ -1329,12 +1332,7 @@ void ApplyAffineAnimFrameRelativeAndUpdateMatrix(u8 matrixNum, struct AffineAnim
 s16 ConvertScaleParam(s16 scale)
 {
     s32 val = 0x10000;
-    // UB: possible division by zero
-#ifdef UBFIX
-    if (scale == 0)
-        return 0;
-#endif //UBFIX
-    return val / scale;
+    return SAFE_DIV(val, scale);
 }
 
 void GetAffineAnimFrame(u8 matrixNum, struct Sprite *sprite, struct AffineAnimFrameCmd *frameCmd)

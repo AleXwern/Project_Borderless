@@ -74,6 +74,14 @@
 #define abs(x) (((x) < 0) ? -(x) : (x))
 #endif
 
+// Used in cases where division by 0 can occur in the retail version.
+// Avoids invalid opcodes on some emulators, and the otherwise UB.
+#ifdef UBFIX
+#define SAFE_DIV(a, b) ((b) ? (a) / (b) : 0)
+#else
+#define SAFE_DIV(a, b) ((a) / (b))
+#endif
+
 // Extracts the upper 16 bits of a 32-bit number
 #define HIHALF(n) (((n) & 0xFFFF0000) >> 16)
 
@@ -99,7 +107,7 @@
 #define T2_READ_PTR(ptr) (void*) T2_READ_32(ptr)
 
 // Macros for checking the joypad
-#define TEST_BUTTON(field, button) ({(field) & (button);})
+#define TEST_BUTTON(field, button) ((field) & (button))
 #define JOY_NEW(button) TEST_BUTTON(gMain.newKeys,  button)
 #define JOY_HELD(button)  TEST_BUTTON(gMain.heldKeys, button)
 #define JOY_HELD_RAW(button) TEST_BUTTON(gMain.heldKeysRaw, button)
@@ -209,7 +217,7 @@ struct PyramidBag
 
 struct BerryCrush
 {
-    u16 berryCrushResults[4];
+    u16 pressingSpeeds[4]; // For the record with each possible group size, 2-5 players
     u32 berryPowderAmount;
     u32 unk;
 };
@@ -579,12 +587,13 @@ struct RamScript
     struct RamScriptData data;
 };
 
-struct EasyChatPair
+// See dewford_trend.c
+struct DewfordTrend
 {
-    u16 unk0_0:7;
-    u16 unk0_7:7;
-    u16 unk1_6:1;
-    u16 unk2;
+    u16 trendiness:7;
+    u16 maxTrendiness:7;
+    u16 gainingTrendiness:1;
+    u16 rand;
     u16 words[2];
 }; /*size = 0x8*/
 
@@ -718,7 +727,7 @@ struct ContestWinner
     u8 contestRank;
 };
 
-struct DayCareMail
+struct DaycareMail
 {
     struct MailStruct message;
     u8 OT_name[PLAYER_NAME_LENGTH + 1];
@@ -730,7 +739,7 @@ struct DayCareMail
 struct DaycareMon
 {
     struct BoxPokemon mon;
-    struct DayCareMail mail;
+    struct DaycareMail mail;
     u32 steps;
 };
 
@@ -741,9 +750,9 @@ struct DayCare
     u8 stepCounter;
 };
 
-struct RecordMixingDayCareMail
+struct RecordMixingDaycareMail
 {
-    struct DayCareMail mail[DAYCARE_MON_COUNT];
+    struct DaycareMail mail[DAYCARE_MON_COUNT];
     u32 numDaycareMons;
     bool16 holdsItem[DAYCARE_MON_COUNT];
 };
@@ -1013,7 +1022,7 @@ struct SaveBlock1
     /*0x2BE0*/ struct MailStruct mail[MAIL_COUNT];
     /*0x2E20*/ u8 additionalPhrases[8]; // bitfield for 33 additional phrases in easy chat system
     /*0x2E28*/ OldMan oldMan;
-    /*0x2e64*/ struct EasyChatPair easyChatPairs[5]; //Dewford trend [0] and some other stuff
+    /*0x2e64*/ struct DewfordTrend dewfordTrends[SAVED_TRENDS_COUNT];
     /*0x2e90*/ struct ContestWinner contestWinners[NUM_CONTEST_WINNERS]; // see CONTEST_WINNER_*
     /*0x3030*/ struct DayCare daycare;
     /*0x3150*/ struct LinkBattleRecords linkBattleRecords;
@@ -1044,16 +1053,6 @@ struct MapPosition
     s16 x;
     s16 y;
     s8 height;
-};
-
-struct TradeRoomPlayer
-{
-    u8 playerId;
-    u8 isLocalPlayer;
-    u8 c;
-    u8 facing;
-    struct MapPosition pos;
-    u16 field_C;
 };
 
 #endif // GUARD_GLOBAL_H

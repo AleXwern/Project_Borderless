@@ -349,11 +349,6 @@
 #define NUM_MALE_LINK_FACILITY_CLASSES   8
 #define NUM_FEMALE_LINK_FACILITY_CLASSES 8
 
-/*#ifndef u8
-typedef unsigned char      u8;
-#endif
-#ifndef u16
-typedef unsigned short     u16;
-#endif*/
+#define MON_PIC_SIZE (64 * 64 / 2)
 
 #endif // GUARD_CONSTANTS_POKEMON_H

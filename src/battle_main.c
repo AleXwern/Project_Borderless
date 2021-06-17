@@ -69,9 +69,6 @@ extern const struct BgTemplate gBattleBgTemplates[];
 extern const struct WindowTemplate *const gBattleWindowTemplates[];
 
 // this file's functions
-#if !defined(NONMATCHING) && MODERN
-#define static
-#endif
 static void CB2_InitBattleInternal(void);
 static void CB2_PreInitMultiBattle(void);
 static void CB2_PreInitIngamePlayerPartnerBattle(void);
@@ -438,24 +435,24 @@ const u8 gTypeEffectiveness[336] =
 
 const u8 gTypeNames[NUMBER_OF_MON_TYPES][TYPE_NAME_LENGTH + 1] =
 {
-    _("NORMAL"),
-    _("FIGHT"),
-    _("FLYING"),
-    _("POISON"),
-    _("GROUND"),
-    _("ROCK"),
-    _("BUG"),
-    _("GHOST"),
-    _("STEEL"),
-    _("???"),
-    _("FIRE"),
-    _("WATER"),
-    _("GRASS"),
-    _("ELECTR"),
-    _("PSYCHC"),
-    _("ICE"),
-    _("DRAGON"),
-    _("DARK"),
+    [TYPE_NORMAL] = _("NORMAL"),
+    [TYPE_FIGHTING] = _("FIGHT"),
+    [TYPE_FLYING] = _("FLYING"),
+    [TYPE_POISON] = _("POISON"),
+    [TYPE_GROUND] = _("GROUND"),
+    [TYPE_ROCK] = _("ROCK"),
+    [TYPE_BUG] = _("BUG"),
+    [TYPE_GHOST] = _("GHOST"),
+    [TYPE_STEEL] = _("STEEL"),
+    [TYPE_MYSTERY] = _("???"),
+    [TYPE_FIRE] = _("FIRE"),
+    [TYPE_WATER] = _("WATER"),
+    [TYPE_GRASS] = _("GRASS"),
+    [TYPE_ELECTRIC] = _("ELECTR"),
+    [TYPE_PSYCHIC] = _("PSYCHC"),
+    [TYPE_ICE] = _("ICE"),
+    [TYPE_DRAGON] = _("DRAGON"),
+    [TYPE_DARK] = _("DARK"),
 };
 
 // This is a factor in how much money you get for beating a trainer.
@@ -580,7 +577,7 @@ void CB2_InitBattle(void)
     AllocateBattleResources();
     AllocateBattleSpritesData();
     AllocateMonSpritesGfx();
-    sub_8185F84();
+    RecordedBattle_ClearFrontierPassFlag();
 
     if (gBattleTypeFlags & BATTLE_TYPE_MULTI)
     {
@@ -615,22 +612,22 @@ static void CB2_InitBattleInternal(void)
     CpuFill32(0, (void*)(VRAM), VRAM_SIZE);
 
     SetGpuReg(REG_OFFSET_MOSAIC, 0);
-    SetGpuReg(REG_OFFSET_WIN0H, 240);
-    SetGpuReg(REG_OFFSET_WIN0V, 0x5051);
+    SetGpuReg(REG_OFFSET_WIN0H, DISPLAY_WIDTH);
+    SetGpuReg(REG_OFFSET_WIN0V, WIN_RANGE(DISPLAY_HEIGHT / 2, DISPLAY_HEIGHT / 2 + 1));
     SetGpuReg(REG_OFFSET_WININ, 0);
     SetGpuReg(REG_OFFSET_WINOUT, 0);
 
-    gBattle_WIN0H = 240;
+    gBattle_WIN0H = DISPLAY_WIDTH;
 
     if (gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER && gPartnerTrainerId != TRAINER_STEVEN_PARTNER)
     {
-        gBattle_WIN0V = 159;
-        gBattle_WIN1H = 240;
+        gBattle_WIN0V = DISPLAY_HEIGHT - 1;
+        gBattle_WIN1H = DISPLAY_WIDTH;
         gBattle_WIN1V = 32;
     }
     else
     {
-        gBattle_WIN0V = 0x5051;
+        gBattle_WIN0V = WIN_RANGE(DISPLAY_HEIGHT / 2, DISPLAY_HEIGHT / 2 + 1);
         ScanlineEffect_Clear();
 
         i = 0;
@@ -737,16 +734,16 @@ static void BufferPartyVsScreenHealth_AtStart(void)
     s32 i;
 
     BUFFER_PARTY_VS_SCREEN_STATUS(gPlayerParty, flags, i);
-    gBattleStruct->vsScreenHealthFlagsLo = flags;
-    *(&gBattleStruct->vsScreenHealthFlagsHi) = flags >> 8;
-    gBattleStruct->vsScreenHealthFlagsHi |= FlagGet(FLAG_SYS_FRONTIER_PASS) << 7;
+    gBattleStruct->multiBuffer.linkBattlerHeader.vsScreenHealthFlagsLo = flags;
+    *(&gBattleStruct->multiBuffer.linkBattlerHeader.vsScreenHealthFlagsHi) = flags >> 8;
+    gBattleStruct->multiBuffer.linkBattlerHeader.vsScreenHealthFlagsHi |= FlagGet(FLAG_SYS_FRONTIER_PASS) << 7;
 }
 
 static void SetPlayerBerryDataInBattleStruct(void)
 {
     s32 i;
     struct BattleStruct *battleStruct = gBattleStruct;
-    struct BattleEnigmaBerry *battleBerry = &battleStruct->battleEnigmaBerry;
+    struct BattleEnigmaBerry *battleBerry = &battleStruct->multiBuffer.linkBattlerHeader.battleEnigmaBerry;
 
     if (IsEnigmaBerryValid() == TRUE)
     {
@@ -886,52 +883,56 @@ static void SetAllPlayersBerryData(void)
     }
 }
 
-static void sub_8036EB8(u8 arg0, u8 arg1)
+// This was inlined in Ruby/Sapphire
+static void FindLinkBattleMaster(u8 numPlayers, u8 multiPlayerId)
 {
-    u8 var = 0;
+    u8 found = 0;
 
-    if (gBlockRecvBuffer[0][0] == 256)
+    // If player 1 is playing the minimum version, player 1 is master.
+    if (gBlockRecvBuffer[0][0] == 0x100)
     {
-        if (arg1 == 0)
+        if (multiPlayerId == 0)
             gBattleTypeFlags |= BATTLE_TYPE_IS_MASTER | BATTLE_TYPE_TRAINER;
         else
             gBattleTypeFlags |= BATTLE_TYPE_TRAINER;
-        var++;
+        found++;
     }
 
-    if (var == 0)
+    if (found == 0)
     {
+        // If multiple different versions are being used, player 1 is master.
         s32 i;
 
-        for (i = 0; i < arg0; i++)
+        for (i = 0; i < numPlayers; i++)
         {
             if (gBlockRecvBuffer[0][0] != gBlockRecvBuffer[i][0])
                 break;
         }
 
-        if (i == arg0)
+        if (i == numPlayers)
         {
-            if (arg1 == 0)
+            if (multiPlayerId == 0)
                 gBattleTypeFlags |= BATTLE_TYPE_IS_MASTER | BATTLE_TYPE_TRAINER;
             else
                 gBattleTypeFlags |= BATTLE_TYPE_TRAINER;
-            var++;
+            found++;
         }
 
-        if (var == 0)
+        if (found == 0)
         {
-            for (i = 0; i < arg0; i++)
+            // Lowest index player with the highest game version is master.
+            for (i = 0; i < numPlayers; i++)
             {
-                if (gBlockRecvBuffer[i][0] == 0x300)
+                if (gBlockRecvBuffer[i][0] == 0x300 && i != multiPlayerId)
                 {
-                    if (i != arg1 && i < arg1)
+                    if (i < multiPlayerId)
                         break;
                 }
-                if (gBlockRecvBuffer[i][0] > 0x300 && i != arg1)
+                if (gBlockRecvBuffer[i][0] > 0x300 && i != multiPlayerId)
                     break;
             }
 
-            if (i == arg0)
+            if (i == numPlayers)
                 gBattleTypeFlags |= BATTLE_TYPE_IS_MASTER | BATTLE_TYPE_TRAINER;
             else
                 gBattleTypeFlags |= BATTLE_TYPE_TRAINER;
@@ -974,8 +975,9 @@ static void CB2_HandleStartBattle(void)
             {
                 if (IsLinkTaskFinished())
                 {
-                    *(&gBattleStruct->field_180) = 0;
-                    *(&gBattleStruct->field_181) = 3;
+                    // 0x300
+                    *(&gBattleStruct->multiBuffer.linkBattlerHeader.versionSignatureLo) = 0;
+                    *(&gBattleStruct->multiBuffer.linkBattlerHeader.versionSignatureHi) = 3;
                     BufferPartyVsScreenHealth_AtStart();
                     SetPlayerBerryDataInBattleStruct();
 
@@ -985,7 +987,7 @@ static void CB2_HandleStartBattle(void)
                         gLinkPlayers[1].id = 1;
                     }
 
-                    SendBlock(bitmask_all_link_players_but_self(), &gBattleStruct->field_180, 32);
+                    SendBlock(bitmask_all_link_players_but_self(), &gBattleStruct->multiBuffer.linkBattlerHeader, sizeof(gBattleStruct->multiBuffer.linkBattlerHeader));
                     gBattleCommunication[MULTIUSE_STATE] = 2;
                 }
                 if (gWirelessCommType)
@@ -1006,16 +1008,16 @@ static void CB2_HandleStartBattle(void)
             u8 taskId;
 
             ResetBlockReceivedFlags();
-            sub_8036EB8(2, playerMultiplayerId);
+            FindLinkBattleMaster(2, playerMultiplayerId);
             SetAllPlayersBerryData();
             taskId = CreateTask(InitLinkBattleVsScreen, 0);
             gTasks[taskId].data[1] = 0x10E;
             gTasks[taskId].data[2] = 0x5A;
             gTasks[taskId].data[5] = 0;
-            gTasks[taskId].data[3] = gBattleStruct->vsScreenHealthFlagsLo | (gBattleStruct->vsScreenHealthFlagsHi << 8);
+            gTasks[taskId].data[3] = gBattleStruct->multiBuffer.linkBattlerHeader.vsScreenHealthFlagsLo | (gBattleStruct->multiBuffer.linkBattlerHeader.vsScreenHealthFlagsHi << 8);
             gTasks[taskId].data[4] = gBlockRecvBuffer[enemyMultiplayerId][1];
-            sub_8185F90(gBlockRecvBuffer[playerMultiplayerId][1]);
-            sub_8185F90(gBlockRecvBuffer[enemyMultiplayerId][1]);
+            RecordedBattle_SetFrontierPassFlagFromHword(gBlockRecvBuffer[playerMultiplayerId][1]);
+            RecordedBattle_SetFrontierPassFlagFromHword(gBlockRecvBuffer[enemyMultiplayerId][1]);
             SetDeoxysStats();
             gBattleCommunication[MULTIUSE_STATE]++;
         }
@@ -1182,11 +1184,12 @@ static void CB2_HandleStartMultiPartnerBattle(void)
 
                 if (IsLinkTaskFinished())
                 {
-                    *(&gBattleStruct->field_180) = 0;
-                    *(&gBattleStruct->field_181) = 3;
+                    // 0x300
+                    *(&gBattleStruct->multiBuffer.linkBattlerHeader.versionSignatureLo) = 0;
+                    *(&gBattleStruct->multiBuffer.linkBattlerHeader.versionSignatureHi) = 3;
                     BufferPartyVsScreenHealth_AtStart();
                     SetPlayerBerryDataInBattleStruct();
-                    SendBlock(bitmask_all_link_players_but_self(), &gBattleStruct->field_180, 32);
+                    SendBlock(bitmask_all_link_players_but_self(), &gBattleStruct->multiBuffer.linkBattlerHeader, sizeof(gBattleStruct->multiBuffer.linkBattlerHeader));
                     gBattleCommunication[MULTIUSE_STATE] = 2;
                 }
 
@@ -1208,7 +1211,7 @@ static void CB2_HandleStartMultiPartnerBattle(void)
             u8 taskId;
 
             ResetBlockReceivedFlags();
-            sub_8036EB8(2, playerMultiplayerId);
+            FindLinkBattleMaster(2, playerMultiplayerId);
             SetAllPlayersBerryData();
             taskId = CreateTask(InitLinkBattleVsScreen, 0);
             gTasks[taskId].data[1] = 0x10E;
@@ -1569,12 +1572,13 @@ static void CB2_HandleStartMultiBattle(void)
             {
                 if (IsLinkTaskFinished())
                 {
-                    *(&gBattleStruct->field_180) = 0;
-                    *(&gBattleStruct->field_181) = 3;
+                    // 0x300
+                    *(&gBattleStruct->multiBuffer.linkBattlerHeader.versionSignatureLo) = 0;
+                    *(&gBattleStruct->multiBuffer.linkBattlerHeader.versionSignatureHi) = 3;
                     BufferPartyVsScreenHealth_AtStart();
                     SetPlayerBerryDataInBattleStruct();
 
-                    SendBlock(bitmask_all_link_players_but_self(), &gBattleStruct->field_180, 32);
+                    SendBlock(bitmask_all_link_players_but_self(), &gBattleStruct->multiBuffer.linkBattlerHeader, sizeof(gBattleStruct->multiBuffer.linkBattlerHeader));
                     gBattleCommunication[MULTIUSE_STATE]++;
                 }
                 if (gWirelessCommType)
@@ -1593,7 +1597,7 @@ static void CB2_HandleStartMultiBattle(void)
         if ((GetBlockReceivedStatus() & 0xF) == 0xF)
         {
             ResetBlockReceivedFlags();
-            sub_8036EB8(4, playerMultiplayerId);
+            FindLinkBattleMaster(4, playerMultiplayerId);
             SetAllPlayersBerryData();
             SetDeoxysStats();
             var = CreateTask(InitLinkBattleVsScreen, 0);
@@ -1605,7 +1609,7 @@ static void CB2_HandleStartMultiBattle(void)
 
             for (id = 0; id < MAX_LINK_PLAYERS; id++)
             {
-                sub_8185F90(gBlockRecvBuffer[id][1]);
+                RecordedBattle_SetFrontierPassFlagFromHword(gBlockRecvBuffer[id][1]);
                 switch (gLinkPlayers[id].id)
                 {
                 case 0:
@@ -1790,10 +1794,10 @@ static void CB2_HandleStartMultiBattle(void)
     case 8:
         if (IsLinkTaskFinished())
         {
-            u32* ptr = (u32*)(&gBattleStruct->field_180);
+            u32* ptr = gBattleStruct->multiBuffer.battleVideo;
             ptr[0] = gBattleTypeFlags;
             ptr[1] = gRecordedBattleRngSeed; // UB: overwrites berry data
-            SendBlock(bitmask_all_link_players_but_self(), ptr, 8);
+            SendBlock(bitmask_all_link_players_but_self(), ptr, sizeof(gBattleStruct->multiBuffer.battleVideo));
             gBattleCommunication[MULTIUSE_STATE]++;
         }
         break;
@@ -2071,7 +2075,7 @@ static u8 CreateNPCTrainerParty(struct Pokemon *party, u16 trainerNum, bool8 fir
 void sub_8038A04(void) // unused
 {
     if (REG_VCOUNT < 0xA0 && REG_VCOUNT >= 0x6F)
-        SetGpuReg(REG_OFFSET_BG0CNT, 0x9800);
+        SetGpuReg(REG_OFFSET_BG0CNT, BGCNT_SCREENBASE(24) | BGCNT_TXT256x512);
 }
 
 void VBlankCB_Battle(void)
@@ -2279,7 +2283,7 @@ static void EndLinkBattleInSteps(void)
         {
             u8 monsCount;
 
-            gMain.field_439_x4 = sub_8185FAC();
+            gMain.anyLinkBattlerHasFrontierPass = RecordedBattle_GetFrontierPassFlag();
 
             if (gBattleTypeFlags & BATTLE_TYPE_MULTI)
                 monsCount = 4;
@@ -2295,7 +2299,7 @@ static void EndLinkBattleInSteps(void)
                     FreeAllWindowBuffers();
                     SetMainCallback2(sub_80392A8);
                 }
-                else if (!gMain.field_439_x4)
+                else if (!gMain.anyLinkBattlerHasFrontierPass)
                 {
                     SetMainCallback2(gMain.savedCallback);
                     FreeBattleResources();
@@ -2304,7 +2308,7 @@ static void EndLinkBattleInSteps(void)
                 }
                 else if (gReceivedRemoteLinkPlayers == 0)
                 {
-                    CreateTask(sub_80B3AF8, 5);
+                    CreateTask(Task_ReconnectWithLinkPlayers, 5);
                     gBattleCommunication[MULTIUSE_STATE]++;
                 }
                 else
@@ -2335,7 +2339,7 @@ static void EndLinkBattleInSteps(void)
             gBattleCommunication[MULTIUSE_STATE]++;
         break;
     case 5:
-        if (!FuncIsActiveTask(sub_80B3AF8))
+        if (!FuncIsActiveTask(Task_ReconnectWithLinkPlayers))
             gBattleCommunication[MULTIUSE_STATE]++;
         break;
     case 6:
@@ -2359,9 +2363,9 @@ static void EndLinkBattleInSteps(void)
         gBattleCommunication[MULTIUSE_STATE]++;
         break;
     case 9:
-        if (!gMain.field_439_x4 || gWirelessCommType || gReceivedRemoteLinkPlayers != 1)
+        if (!gMain.anyLinkBattlerHasFrontierPass || gWirelessCommType || gReceivedRemoteLinkPlayers != 1)
         {
-            gMain.field_439_x4 = 0;
+            gMain.anyLinkBattlerHasFrontierPass = 0;
             SetMainCallback2(gMain.savedCallback);
             FreeBattleResources();
             FreeBattleSpritesData();
@@ -2457,12 +2461,12 @@ static void sub_803939C(void)
         gBattleCommunication[MULTIUSE_STATE]++;
         break;
     case 1:
-        if (gMain.field_439_x4 && gReceivedRemoteLinkPlayers == 0)
-            CreateTask(sub_80B3AF8, 5);
+        if (gMain.anyLinkBattlerHasFrontierPass && gReceivedRemoteLinkPlayers == 0)
+            CreateTask(Task_ReconnectWithLinkPlayers, 5);
         gBattleCommunication[MULTIUSE_STATE]++;
         break;
     case 2:
-        if (!FuncIsActiveTask(sub_80B3AF8))
+        if (!FuncIsActiveTask(Task_ReconnectWithLinkPlayers))
             gBattleCommunication[MULTIUSE_STATE]++;
         break;
     case 3:
@@ -2527,7 +2531,7 @@ static void sub_803939C(void)
         if (IsLinkTaskFinished() == TRUE)
         {
             HandleBattleWindow(0x18, 8, 0x1D, 0xD, WINDOW_CLEAR);
-            if (gMain.field_439_x4)
+            if (gMain.anyLinkBattlerHasFrontierPass)
             {
                 SetLinkStandbyCallback();
                 BattlePutTextOnWindow(gText_LinkStandby3, 0);
@@ -2538,15 +2542,15 @@ static void sub_803939C(void)
     case 8:
         if (--gBattleCommunication[1] == 0)
         {
-            if (gMain.field_439_x4 && !gWirelessCommType)
+            if (gMain.anyLinkBattlerHasFrontierPass && !gWirelessCommType)
                 SetCloseLinkCallback();
             gBattleCommunication[MULTIUSE_STATE]++;
         }
         break;
     case 9:
-        if (!gMain.field_439_x4 || gWirelessCommType || gReceivedRemoteLinkPlayers != 1)
+        if (!gMain.anyLinkBattlerHasFrontierPass || gWirelessCommType || gReceivedRemoteLinkPlayers != 1)
         {
-            gMain.field_439_x4 = 0;
+            gMain.anyLinkBattlerHasFrontierPass = 0;
             if (!gPaletteFade.active)
             {
                 SetMainCallback2(gMain.savedCallback);
@@ -2576,7 +2580,7 @@ static void sub_803939C(void)
     case 11:
         if (IsLinkTaskFinished() == TRUE && !IsTextPrinterActive(0) && --gBattleCommunication[1] == 0)
         {
-            if (gMain.field_439_x4)
+            if (gMain.anyLinkBattlerHasFrontierPass)
             {
                 SetLinkStandbyCallback();
                 BattlePutTextOnWindow(gText_LinkStandby3, 0);
@@ -2588,7 +2592,7 @@ static void sub_803939C(void)
     case 7:
         if (!IsTextPrinterActive(0))
         {
-            if (gMain.field_439_x4)
+            if (gMain.anyLinkBattlerHasFrontierPass)
             {
                 if (IsLinkTaskFinished() == TRUE)
                 {
@@ -3983,7 +3987,7 @@ u8 IsRunningFromBattleImpossible(void)
         {
             gBattleScripting.battler = i;
             gLastUsedAbility = gBattleMons[i].ability;
-            gBattleCommunication[MULTISTRING_CHOOSER] = 2;
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PREVENTS_ESCAPE;
             return 2;
         }
         if (side != GetBattlerSide(i)
@@ -3993,7 +3997,7 @@ u8 IsRunningFromBattleImpossible(void)
         {
             gBattleScripting.battler = i;
             gLastUsedAbility = gBattleMons[i].ability;
-            gBattleCommunication[MULTISTRING_CHOOSER] = 2;
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PREVENTS_ESCAPE;
             return 2;
         }
     }
@@ -4002,18 +4006,18 @@ u8 IsRunningFromBattleImpossible(void)
     {
         gBattleScripting.battler = i - 1;
         gLastUsedAbility = gBattleMons[i - 1].ability;
-        gBattleCommunication[MULTISTRING_CHOOSER] = 2;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PREVENTS_ESCAPE;
         return 2;
     }
     if ((gBattleMons[gActiveBattler].status2 & (STATUS2_ESCAPE_PREVENTION | STATUS2_WRAPPED))
         || (gStatuses3[gActiveBattler] & STATUS3_ROOTED))
     {
-        gBattleCommunication[MULTISTRING_CHOOSER] = 0;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CANT_ESCAPE;
         return 1;
     }
     if (gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE)
     {
-        gBattleCommunication[MULTISTRING_CHOOSER] = 1;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_DONT_LEAVE_BIRCH;
         return 1;
     }
     return 0;
@@ -4111,7 +4115,7 @@ static void HandleTurnActionSelectionState(void)
             }
             break;
         case STATE_WAIT_ACTION_CHOSEN: // Try to perform an action.
-            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF0000000) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 0xC))))
+            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF << 28) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 12))))
             {
                 RecordedBattle_SetBattlerAction(gActiveBattler, gBattleBufferB[gActiveBattler][1]);
                 gChosenActionByBattler[gActiveBattler] = gBattleBufferB[gActiveBattler][1];
@@ -4290,7 +4294,7 @@ static void HandleTurnActionSelectionState(void)
             }
             break;
         case STATE_WAIT_ACTION_CASE_CHOSEN:
-            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF0000000) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 0xC))))
+            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF << 28) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 12))))
             {
                 switch (gChosenActionByBattler[gActiveBattler])
                 {
@@ -4399,7 +4403,7 @@ static void HandleTurnActionSelectionState(void)
             break;
         case STATE_WAIT_ACTION_CONFIRMED_STANDBY:
             if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) 
-                                                | (0xF0000000) 
+                                                | (0xF << 28)
                                                 | (gBitTable[gActiveBattler] << 4) 
                                                 | (gBitTable[gActiveBattler] << 8) 
                                                 | (gBitTable[gActiveBattler] << 12))))
@@ -4424,7 +4428,7 @@ static void HandleTurnActionSelectionState(void)
             }
             break;
         case STATE_WAIT_ACTION_CONFIRMED:
-            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF0000000) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 0xC))))
+            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF << 28) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 12))))
             {
                 gBattleCommunication[ACTIONS_CONFIRMED_COUNT]++;
             }
@@ -4438,7 +4442,7 @@ static void HandleTurnActionSelectionState(void)
             {
                 gBattlerAttacker = gActiveBattler;
                 gBattlescriptCurrInstr = gSelectionBattleScripts[gActiveBattler];
-                if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF0000000) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 0xC))))
+                if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF << 28) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 12))))
                 {
                     gBattleScriptingCommandsTable[gBattlescriptCurrInstr[0]]();
                 }
@@ -4446,7 +4450,7 @@ static void HandleTurnActionSelectionState(void)
             }
             break;
         case STATE_WAIT_SET_BEFORE_ACTION:
-            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF0000000) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 0xC))))
+            if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF << 28) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 12))))
             {
                 gBattleCommunication[gActiveBattler] = STATE_BEFORE_ACTION_CHOSEN;
             }
@@ -4470,7 +4474,7 @@ static void HandleTurnActionSelectionState(void)
             {
                 gBattlerAttacker = gActiveBattler;
                 gBattlescriptCurrInstr = gSelectionBattleScripts[gActiveBattler];
-                if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF0000000) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 0xC))))
+                if (!(gBattleControllerExecFlags & ((gBitTable[gActiveBattler]) | (0xF << 28) | (gBitTable[gActiveBattler] << 4) | (gBitTable[gActiveBattler] << 8) | (gBitTable[gActiveBattler] << 12))))
                 {
                     gBattleScriptingCommandsTable[gBattlescriptCurrInstr[0]]();
                 }
@@ -5063,7 +5067,7 @@ static void HandleEndTurn_FinishBattle(void)
                     }
                 }
             }
-            PutPokemonTodayCaughtOnAir();
+            TryPutPokemonTodayOnAir();
         }
 
         if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK
@@ -5076,7 +5080,7 @@ static void HandleEndTurn_FinishBattle(void)
                                   | BATTLE_TYPE_WALLY_TUTORIAL))
             && gBattleResults.shinyWildMon)
         {
-            sub_80EE184();
+            TryPutBreakingNewsOnAir();
         }
 
         sub_8186444();
@@ -5172,7 +5176,12 @@ static void ReturnFromBattleToOverworld(void)
     if (gBattleTypeFlags & BATTLE_TYPE_ROAMER)
     {
         UpdateRoamerHPStatus(&gEnemyParty[0]);
+
+#ifndef BUGFIX
         if ((gBattleOutcome & B_OUTCOME_WON) || gBattleOutcome == B_OUTCOME_CAUGHT)
+#else
+        if ((gBattleOutcome == B_OUTCOME_WON) || gBattleOutcome == B_OUTCOME_CAUGHT) // Bug: When Roar is used by roamer, gBattleOutcome is B_OUTCOME_PLAYER_TELEPORTED (5).
+#endif                                                                               // & with B_OUTCOME_WON (1) will return TRUE and deactivates the roamer.
             SetRoamerInactive();
     }
 
