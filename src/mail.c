@@ -87,11 +87,6 @@ static void CB2_WaitForPaletteExitOnKeyPress(void);
 static void CB2_ExitOnKeyPress(void);
 static void CB2_ExitMailReadFreeVars(void);
 
-<<<<<<< HEAD
-// .rodata
-
-=======
->>>>>>> upstream/master
 static const struct BgTemplate sBgTemplates[] = {
     {
         .bg = 0,
@@ -455,20 +450,12 @@ void ReadMail(struct MailStruct *mail, void (*exitCallback)(void), bool8 hasText
 
     sMailRead = calloc(1, sizeof(*sMailRead));
     sMailRead->language = GAME_LANGUAGE;
-<<<<<<< HEAD
-    sMailRead->playerIsSender = TRUE;
-=======
     sMailRead->international = TRUE;
->>>>>>> upstream/master
     sMailRead->parserSingle = CopyEasyChatWord;
     sMailRead->parserMultiple = ConvertEasyChatWordsToString;
     if (IS_ITEM_MAIL(mail->itemId))
     {
-<<<<<<< HEAD
-        sMailRead->mailType = mail->itemId - FIRST_MAIL_INDEX;
-=======
         sMailRead->mailType = ITEM_TO_MAIL(mail->itemId);
->>>>>>> upstream/master
     }
     else
     {
@@ -491,17 +478,6 @@ void ReadMail(struct MailStruct *mail, void (*exitCallback)(void), bool8 hasText
     {
         switch (sMailRead->mailType)
         {
-<<<<<<< HEAD
-            default:
-                sMailRead->animsActive = 0;
-                break;
-            case ITEM_BEAD_MAIL - FIRST_MAIL_INDEX:
-                sMailRead->animsActive = 1;
-                break;
-            case ITEM_DREAM_MAIL - FIRST_MAIL_INDEX:
-                sMailRead->animsActive = 2;
-                break;
-=======
         default:
             sMailRead->iconType = ICON_TYPE_NONE;
             break;
@@ -511,7 +487,6 @@ void ReadMail(struct MailStruct *mail, void (*exitCallback)(void), bool8 hasText
         case ITEM_TO_MAIL(ITEM_DREAM_MAIL):
             sMailRead->iconType = ICON_TYPE_DREAM;
             break;
->>>>>>> upstream/master
         }
     }
     else

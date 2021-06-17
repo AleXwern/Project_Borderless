@@ -187,8 +187,6 @@
 #define CONTESTLIVE_FLAG_MISSED_EXCITEMENT (1 << 5)
 #define CONTESTLIVE_FLAG_LAST_BOTH_ROUNDS  (1 << 6)
 #define CONTESTLIVE_FLAG_NO_APPEALS        (1 << 7)
-<<<<<<< HEAD
-=======
 
 // TV Show states for Spot the Cuties
 #define SPOTCUTIES_STATE_INTRO            0
@@ -207,6 +205,5 @@
 #define SPOTCUTIES_STATE_RIBBON_ARTIST   13
 #define SPOTCUTIES_STATE_RIBBON_EFFORT   14
 #define SPOTCUTIES_STATE_OUTRO           15
->>>>>>> upstream/master
 
 #endif //GUARD_CONSTANTS_TV_H
